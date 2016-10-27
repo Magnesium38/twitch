@@ -2,32 +2,6 @@ package twitch
 
 import "strings"
 
-// A ChatMessage is the internal representation of a message used by
-// Twitch.tv's IRC based chat service.
-type ChatMessage struct {
-	tags      []Tag
-	source    string
-	command   string
-	arguments string
-}
-
-// Build takes a message and formats it as an actual message.
-func (m *ChatMessage) Build() (msg string) {
-	msg = ""
-	if len(m.tags) > 0 {
-
-		tags := "@"
-		for _, tag := range m.tags {
-			tags += tag.key + "=" + tag.value + ";"
-		}
-		msg += tags[:len(tags)-1] + " "
-	}
-	msg += ":" + m.source
-	msg += " " + m.command
-	msg += " " + m.arguments
-	return
-}
-
 // InvalidChatMessageError is a custom error for failures at parsing a message.
 type InvalidChatMessageError struct {
 	msg string
@@ -37,17 +11,44 @@ func (e InvalidChatMessageError) Error() string {
 	return e.msg
 }
 
-func singleSplit(s string, delim string) (a, b string, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = InvalidChatMessageError{
-				"Invalid Chat Message; Error splitting \"" +
-					s + "\" with \"" + delim + "\";",
-			}
-		}
-	}()
-	split := strings.SplitN(s, delim, 2)
-	a, b, err = split[0], split[1], nil
+// A ChatMessage is the internal representation of a message used by
+// Twitch.tv's IRC based chat service.
+type ChatMessage struct {
+	tags      Tags
+	source    string
+	command   string
+	arguments string
+}
+
+// Source returns whoever sent the message.
+func (m *ChatMessage) Source() string {
+	return m.source
+}
+
+// Command returns the IRC command associated with the message.
+func (m *ChatMessage) Command() string {
+	return m.command
+}
+
+// Arguments returns the arguments for the command.
+func (m *ChatMessage) Arguments() string {
+	return m.arguments
+}
+
+// Tags returns the tags that are associated with the message.
+func (m *ChatMessage) Tags() *Tags {
+	return &m.tags
+}
+
+// Build takes a message and formats it as an actual message.
+func (m *ChatMessage) Build() (msg string) {
+	msg = ""
+	if m.tags.Length() > 0 {
+		msg += m.Tags().String() + " "
+	}
+	msg += ":" + m.source
+	msg += " " + m.command
+	msg += " " + m.arguments
 	return
 }
 
@@ -71,7 +72,7 @@ func ParseChatMessage(msg string) (chatMsg ChatMessage, err error) {
 		switch string(currentPart[0]) {
 		case "@":
 			// Parse tag material, if any.
-			var tags []Tag
+			var tags Tags
 			var tag, key, value string
 			currentPart = currentPart[1:]
 			for len(currentPart) > 0 {
@@ -89,7 +90,7 @@ func ParseChatMessage(msg string) (chatMsg ChatMessage, err error) {
 					return
 				}
 
-				tags = append(tags, Tag{key, value})
+				tags.Add(Tag{key, value})
 			}
 
 			chatMsg.tags = tags
