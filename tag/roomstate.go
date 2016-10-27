@@ -1,6 +1,10 @@
-package twitch
+package tags
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/magnesium38/twitch"
+)
 
 // Roomstate is a set of tags that define the set of the room.
 type Roomstate struct {
@@ -11,13 +15,13 @@ type Roomstate struct {
 }
 
 // Update takes a message and updates the Roomstate appropriately if needed.
-func (state *Roomstate) Update(msg ChatMessage) {
-	if msg.command == "ROOMSTATE" {
-		if has, tag := msg.tags.Has("broadcaster-lang"); has {
-			state.SetLanguage(tag.value)
+func (state *Roomstate) Update(msg twitch.ChatMessage) {
+	if msg.Command() == "ROOMSTATE" {
+		if has, tag := msg.Tags().Has("broadcaster-lang"); has {
+			state.SetLanguage(tag.Value())
 		}
-		if has, tag := msg.tags.Has("r9k"); has {
-			value, err := strconv.Atoi(tag.value)
+		if has, tag := msg.Tags().Has("r9k"); has {
+			value, err := strconv.Atoi(tag.Value())
 			if err == nil {
 				if value == 1 {
 					state.r9k = true
@@ -27,8 +31,8 @@ func (state *Roomstate) Update(msg ChatMessage) {
 				}
 			}
 		}
-		if has, tag := msg.tags.Has("subs-only"); has {
-			value, err := strconv.Atoi(tag.value)
+		if has, tag := msg.Tags().Has("subs-only"); has {
+			value, err := strconv.Atoi(tag.Value())
 			if err == nil {
 				if value == 1 {
 					state.subOnly = true
@@ -37,8 +41,8 @@ func (state *Roomstate) Update(msg ChatMessage) {
 				}
 			}
 		}
-		if has, tag := msg.tags.Has("slow"); has {
-			value, err := strconv.Atoi(tag.value)
+		if has, tag := msg.Tags().Has("slow"); has {
+			value, err := strconv.Atoi(tag.Value())
 			if err == nil {
 				state.slow = value
 			}
