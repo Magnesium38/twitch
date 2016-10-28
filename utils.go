@@ -2,12 +2,21 @@ package twitch
 
 import "strings"
 
-func singleSplit(s string, delim string) (a, b string, err error) {
+// SingleSplitError is a custom error for failures when splitting once.
+type SingleSplitError struct {
+	msg string
+}
+
+func (err SingleSplitError) Error() string {
+	return err.msg
+}
+
+// SingleSplit is a helper method to only do a single split.
+func SingleSplit(s string, delim string) (a, b string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = InvalidChatMessageError{
-				"Invalid Chat Message; Error splitting \"" +
-					s + "\" with \"" + delim + "\";",
+			err = SingleSplitError{
+				"Error splitting \"" + s + "\" with \"" + delim + "\";",
 			}
 		}
 	}()

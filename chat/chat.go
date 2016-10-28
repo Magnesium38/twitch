@@ -1,19 +1,23 @@
-package twitch
+package chat
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/magnesium38/twitch"
+)
 
 // InvalidChatMessageError is a custom error for failures at parsing a message.
 type InvalidChatMessageError struct {
 	msg string
 }
 
-func (e InvalidChatMessageError) Error() string {
-	return e.msg
+func (err InvalidChatMessageError) Error() string {
+	return err.msg
 }
 
-// A ChatMessage is the internal representation of a message used by
+// A Message is the internal representation of a message used by
 // Twitch.tv's IRC based chat service.
-type ChatMessage struct {
+type Message struct {
 	tags      Tags
 	source    string
 	command   string
@@ -21,27 +25,27 @@ type ChatMessage struct {
 }
 
 // Source returns whoever sent the message.
-func (m *ChatMessage) Source() string {
+func (m *Message) Source() string {
 	return m.source
 }
 
 // Command returns the IRC command associated with the message.
-func (m *ChatMessage) Command() string {
+func (m *Message) Command() string {
 	return m.command
 }
 
 // Arguments returns the arguments for the command.
-func (m *ChatMessage) Arguments() string {
+func (m *Message) Arguments() string {
 	return m.arguments
 }
 
 // Tags returns the tags that are associated with the message.
-func (m *ChatMessage) Tags() *Tags {
+func (m *Message) Tags() *Tags {
 	return &m.tags
 }
 
 // Build takes a message and formats it as an actual message.
-func (m *ChatMessage) Build() (msg string) {
+func (m *Message) Build() (msg string) {
 	msg = ""
 	if m.tags.Length() > 0 {
 		msg += m.Tags().String() + " "
@@ -53,8 +57,8 @@ func (m *ChatMessage) Build() (msg string) {
 }
 
 // ParseChatMessage takes a string and parses it into a ChatMessage
-func ParseChatMessage(msg string) (chatMsg ChatMessage, err error) {
-	chatMsg = ChatMessage{}
+func ParseChatMessage(msg string) (chatMsg Message, err error) {
+	chatMsg = Message{}
 	err = nil
 
 	// Parse the space-delimited portions.
@@ -62,7 +66,7 @@ func ParseChatMessage(msg string) (chatMsg ChatMessage, err error) {
 	var currentPart string
 	for {
 
-		currentPart, msg, err = singleSplit(msg, " ")
+		currentPart, msg, err = twitch.SingleSplit(msg, " ")
 		if err != nil {
 			return
 		}
@@ -77,7 +81,7 @@ func ParseChatMessage(msg string) (chatMsg ChatMessage, err error) {
 			currentPart = currentPart[1:]
 			for len(currentPart) > 0 {
 				if strings.Index(currentPart, ";") != -1 {
-					tag, currentPart, err = singleSplit(currentPart, ";")
+					tag, currentPart, err = twitch.SingleSplit(currentPart, ";")
 					if err != nil {
 						return
 					}
@@ -85,7 +89,7 @@ func ParseChatMessage(msg string) (chatMsg ChatMessage, err error) {
 					tag, currentPart = currentPart, ""
 				}
 
-				key, value, err = singleSplit(tag, "=")
+				key, value, err = twitch.SingleSplit(tag, "=")
 				if err != nil {
 					return
 				}
@@ -106,7 +110,7 @@ func ParseChatMessage(msg string) (chatMsg ChatMessage, err error) {
 	}
 
 	// Next is the command.
-	currentPart, msg, err = singleSplit(msg, " ")
+	currentPart, msg, err = twitch.SingleSplit(msg, " ")
 	chatMsg.command = currentPart
 
 	chatMsg.arguments = msg

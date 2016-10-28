@@ -1,4 +1,4 @@
-package twitch
+package chat
 
 // IrcMessage is a basic representation of an IRC message.
 type IrcMessage interface {

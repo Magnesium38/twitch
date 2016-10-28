@@ -1,4 +1,4 @@
-package twitch
+package chat
 
 // A Tag is a key value pair as given by the Twitch API.
 type Tag struct {
